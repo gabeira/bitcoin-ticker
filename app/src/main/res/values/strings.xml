@@ -1,4 +1,18 @@
 <resources>
     <string name="app_name">Bitcoin ticker</string>
 
+    <string name="buy">BUY</string>
+    <string name="sell">SELL</string>
+
+    <string name="units">Units</string>
+    <string name="amount">Amount (£)</string>
+    <string name="market">Market</string>
+    <string name="swipe_market">Swipe to change Market</string>
+
+    <string name="stop_loss">Stop Loss</string>
+    <string name="take_profit">Take Profit</string>
+    <string name="estimated_margin">Estimated Margin (£)</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
 </resources>
