@@ -31,7 +31,6 @@ class OrderTicketFragment : DaggerFragment() {
         savedInstanceState: Bundle?
     ): View? {
         return ComposeView(requireContext()).apply {
-            viewModel.getTickerBy("GBP")
             setContent {
                 ComposeSampleTheme {
                     Surface(
@@ -42,15 +41,20 @@ class OrderTicketFragment : DaggerFragment() {
                             viewModel,
                             onConfirmClick = {
                                 //TODO Implement Confirmation
-                                Log.e("Frag", ">> onConfirmClick with amount of ${it.amount}")
+                                Toast.makeText(
+                                    context,
+                                    "Order of ${it.units} units in total ${it.amount} on ${it.symbol} currency",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             },
                             onCancelClick = {
                                 //TODO Implement Cancel
-                                Log.e("Frag", ">> onCancelClick ")
+                                Toast.makeText(context, "Cancel Click", Toast.LENGTH_LONG).show()
                             },
                             onSwipeMarket = {
                                 //TODO Implement Swipe
-                                Log.e("Frag", ">> onSwipeMarket")
+                                Toast.makeText(context, "Market Swipe clicked", Toast.LENGTH_LONG)
+                                    .show()
                             })
                     }
                 }
@@ -60,20 +64,12 @@ class OrderTicketFragment : DaggerFragment() {
 
     override fun onResume() {
         super.onResume()
-        //TODO remove this code, only for testing purpose
-        viewModel.ticker.observe(this) {
-            Toast.makeText(
-                context,
-                "Ticker last value ${it.last} for ${it.symbol}",
-                Toast.LENGTH_LONG
-            ).show()
-        }
+        viewModel.startPolling()
     }
 
     override fun onPause() {
         super.onPause()
-
-        // TODO("Stop polling")
+        viewModel.stopPolling()
     }
 }
 

@@ -9,4 +9,6 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+<!--    TODO configure compose the with no action bar-->
+<!--    <style name="Theme.ComposeSample" parent="android:Theme.Material.Light.NoActionBar" />-->
 </resources>

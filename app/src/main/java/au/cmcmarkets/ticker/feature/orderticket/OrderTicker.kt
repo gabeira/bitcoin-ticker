@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import au.cmcmarkets.ticker.R
 import au.cmcmarkets.ticker.data.model.Order
 import au.cmcmarkets.ticker.data.model.Ticker
+import au.cmcmarkets.ticker.domain.calculateAmountWith
+import au.cmcmarkets.ticker.domain.calculateUnitsWith
 import au.cmcmarkets.ticker.ui.component.CancelButton
 import au.cmcmarkets.ticker.ui.component.ConfirmButton
 import au.cmcmarkets.ticker.ui.component.EditTextTopTitle
@@ -61,8 +63,8 @@ fun OrderTicker(
     onSwipeMarket: () -> Unit
 ) {
     var orderTypeBuy by rememberSaveable { mutableStateOf(true) }
-    val units by rememberSaveable { mutableStateOf(BigDecimal.ZERO) }
-    val amount by rememberSaveable { mutableStateOf(BigDecimal.ZERO) }
+    var units by rememberSaveable { mutableStateOf("") }
+    var amount by rememberSaveable { mutableStateOf("") }
     var btConfirmEnabled by rememberSaveable { mutableStateOf(false) }
     val ticker = viewModel.ticker.observeAsState().value
     Scaffold(
@@ -86,8 +88,8 @@ fun OrderTicker(
                                     orderTypeBuy,
                                     Calendar.getInstance().timeInMillis,
                                     it.buy,
-                                    units,
-                                    amount,
+                                    BigDecimal(units),
+                                    BigDecimal(amount),
                                     it.symbol
                                 )
                             )
@@ -148,12 +150,16 @@ fun OrderTicker(
                 ticker,
                 orderTypeBuy,
                 onUnitsValueChange = {
-                    if (it.isNotEmpty()) btConfirmEnabled = true
-//                    units = BigDecimal(it)
+                    if (it.isNotEmpty()) {
+                        btConfirmEnabled = true
+                        units = it
+                    }
                 },
                 onAmountValueChange = {
-                    if (it.isNotEmpty()) btConfirmEnabled = true
-//                    amount = BigDecimal(it)
+                    if (it.isNotEmpty()) {
+                        btConfirmEnabled = true
+                        amount = it
+                    }
                 },
                 onSwipeMarket
             )
@@ -321,7 +327,7 @@ fun Units(
         ) { unitsSelected ->
             unitsValue = unitsSelected
             amountValue = try {
-                price.multiply(BigDecimal(unitsSelected)).toString()
+                price.calculateAmountWith(unitsSelected)
             } catch (e: Exception) {
                 e.printStackTrace()
                 "0"
@@ -336,7 +342,7 @@ fun Units(
         ) {
             amountValue = it
             unitsValue = try {
-                BigDecimal(it).divide(price).toString()
+                it.calculateUnitsWith(price)
             } catch (e: Exception) {
                 e.printStackTrace()
                 "0"

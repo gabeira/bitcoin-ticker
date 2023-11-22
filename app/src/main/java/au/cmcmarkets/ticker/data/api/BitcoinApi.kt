@@ -7,6 +7,6 @@ import retrofit2.http.GET
 interface BitcoinApi {
 
     @GET("/ticker")
-    suspend fun getTickers(): Response<Map<String, Ticker>>
+    suspend fun getTickers(): Map<String, Ticker>
 
 }

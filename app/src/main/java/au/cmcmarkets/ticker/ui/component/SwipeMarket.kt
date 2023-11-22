@@ -34,6 +34,10 @@ fun SwipeMarket(isBuy: Boolean, modifier: Modifier = Modifier, onSwipe: () -> Un
             .padding(6.dp)
             .background(color = Color.Transparent)
             .clip(RoundedCornerShape(percent = 20))
+            .clickable {
+                onSwipe()
+                //TODO implement Swipe Market instead of click
+            }
     ) {
         Column {
             Text(
@@ -53,7 +57,6 @@ fun SwipeMarket(isBuy: Boolean, modifier: Modifier = Modifier, onSwipe: () -> Un
                     .fillMaxWidth()
                     .fillMaxHeight()
                     .background(Color.Gray)
-                    .clickable { onSwipe() } //TODO implement Swipe Market
             )
         }
     }
