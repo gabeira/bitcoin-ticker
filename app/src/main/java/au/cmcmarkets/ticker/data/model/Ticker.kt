@@ -9,4 +9,7 @@ data class Ticker(
     var buy: BigDecimal,
     var sell: BigDecimal,
     var symbol: String
-)
+) {
+    val spread: BigDecimal
+        get() = buy.minus(sell)
+}

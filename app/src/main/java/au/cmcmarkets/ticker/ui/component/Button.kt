@@ -37,7 +37,7 @@ fun CancelButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun ConfirmButton(onClick: () -> Unit) {
+fun ConfirmButton(btEnabled: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
@@ -47,6 +47,7 @@ fun ConfirmButton(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp),
+        enabled = btEnabled,
         shape = RoundedCornerShape(percent = 20)
     ) {
         Text(text = stringResource(id = R.string.confirm))
@@ -59,7 +60,7 @@ fun CancelConfirmButtonPreview() {
     ComposeSampleTheme {
         Row {
             CancelButton { }
-            ConfirmButton { }
+            ConfirmButton(true) { }
         }
     }
 }

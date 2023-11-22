@@ -1,5 +1,7 @@
 package au.cmcmarkets.ticker.ui.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -9,8 +11,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import au.cmcmarkets.ticker.ui.theme.BackgroundProfit
 import au.cmcmarkets.ticker.ui.theme.BackgroundUnits
 import au.cmcmarkets.ticker.ui.theme.ComposeSampleTheme
+import au.cmcmarkets.ticker.ui.theme.DarkYellow
 import au.cmcmarkets.ticker.ui.theme.GreenPrice
 import au.cmcmarkets.ticker.ui.theme.LightBlue
 
@@ -36,9 +38,9 @@ fun TextTicker(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         textAlign = TextAlign.Center,
-        fontSize = 38.sp,
+        fontSize = 34.sp,
         maxLines = 1,
-        softWrap = true,
+        softWrap = false,
         color = GreenPrice,
         modifier = modifier
             .fillMaxWidth()
@@ -50,7 +52,27 @@ fun TextTicker(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun TextTickerPreview() {
     ComposeSampleTheme {
-        TextTicker("", Modifier)
+        TextTicker("4323.42", Modifier)
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun EditTextTopTitle(
+    modifier: Modifier = Modifier,
+    title: String,
+    isBuy: Boolean,
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    Column(modifier) {
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            color = if (isBuy) LightBlue else DarkYellow,
+            modifier = modifier.align(Alignment.CenterHorizontally)
+        )
+        EditText(isBuy = isBuy, value = value, onValueChange = onValueChange)
     }
 }
 
@@ -58,21 +80,21 @@ fun TextTickerPreview() {
 @Composable
 fun EditText(
     modifier: Modifier = Modifier,
-    newValue: String = "",
+    isBuy: Boolean,
+    value: String,
     onValueChange: (String) -> Unit
 ) {
-    val currentValue = remember { mutableStateOf(newValue) }
     val controller = LocalSoftwareKeyboardController.current
     OutlinedTextField(
-        value = currentValue.value,
-        onValueChange = { currentValue.value = it },
+        value = value,
+        onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .sizeIn(maxHeight = 65.dp)
+            .sizeIn(maxHeight = 60.dp)
             .padding(horizontal = 4.dp),
         textStyle = TextStyle(
             color = Color.White,
-            fontSize = 28.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             baselineShift = BaselineShift.Superscript,
             textAlign = TextAlign.Center,
@@ -81,13 +103,10 @@ fun EditText(
         isError = false,
         visualTransformation = VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        keyboardActions = KeyboardActions(onDone = {
-            onValueChange(currentValue.value)
-            controller?.hide()
-        }),
+        keyboardActions = KeyboardActions(onDone = { controller?.hide() }),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = LightBlue,
+            focusedBorderColor = if (isBuy) LightBlue else DarkYellow,
             unfocusedBorderColor = BackgroundUnits,
             focusedContainerColor = BackgroundProfit,
             unfocusedContainerColor = BackgroundProfit,
@@ -97,8 +116,10 @@ fun EditText(
 
 @Preview(showBackground = true)
 @Composable
-fun EditorPreview() {
+fun EditTextPreview() {
     ComposeSampleTheme {
-        EditText(Modifier) {}
+        Column(Modifier.background(BackgroundUnits)) {
+            EditTextTopTitle(Modifier, "Test", true, "") {}
+        }
     }
 }

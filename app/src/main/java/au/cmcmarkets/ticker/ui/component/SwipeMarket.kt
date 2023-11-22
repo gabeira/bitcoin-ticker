@@ -23,10 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import au.cmcmarkets.ticker.R
 import au.cmcmarkets.ticker.ui.theme.ComposeSampleTheme
+import au.cmcmarkets.ticker.ui.theme.DarkYellow
 import au.cmcmarkets.ticker.ui.theme.LightBlue
 
 @Composable
-fun SwipeMarket(modifier: Modifier = Modifier, onSwipe: () -> Unit) {
+fun SwipeMarket(isBuy: Boolean, modifier: Modifier = Modifier, onSwipe: () -> Unit) {
     Box(
         modifier = modifier
             .sizeIn(maxHeight = 80.dp)
@@ -43,7 +44,7 @@ fun SwipeMarket(modifier: Modifier = Modifier, onSwipe: () -> Unit) {
                 modifier = modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.5f)
-                    .background(color = LightBlue)
+                    .background(color = if (isBuy) LightBlue else DarkYellow)
             )
             Image(
                 painter = painterResource(id = R.drawable.more),
@@ -62,6 +63,6 @@ fun SwipeMarket(modifier: Modifier = Modifier, onSwipe: () -> Unit) {
 @Composable
 fun SwipeMarketPreview() {
     ComposeSampleTheme {
-        SwipeMarket(Modifier) {}
+        SwipeMarket(false, Modifier) {}
     }
 }

@@ -1,9 +1,11 @@
 package au.cmcmarkets.ticker.feature.orderticket
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,9 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,12 +31,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
 import au.cmcmarkets.ticker.R
+import au.cmcmarkets.ticker.data.model.Order
 import au.cmcmarkets.ticker.data.model.Ticker
 import au.cmcmarkets.ticker.ui.component.CancelButton
 import au.cmcmarkets.ticker.ui.component.ConfirmButton
-import au.cmcmarkets.ticker.ui.component.EditText
+import au.cmcmarkets.ticker.ui.component.EditTextTopTitle
 import au.cmcmarkets.ticker.ui.component.SwipeMarket
 import au.cmcmarkets.ticker.ui.component.TextTicker
 import au.cmcmarkets.ticker.ui.theme.Background
@@ -45,28 +49,22 @@ import au.cmcmarkets.ticker.ui.theme.GreenPrice
 import au.cmcmarkets.ticker.ui.theme.LightBlue
 import au.cmcmarkets.ticker.ui.theme.RedPrice
 import java.math.BigDecimal
+import java.util.Calendar
 
 
 @Composable
 fun OrderTicker(
+    viewModel: OrderTicketViewModel,
     modifier: Modifier = Modifier,
-    onConfirmClick: () -> Unit,
+    onConfirmClick: (Order) -> Unit,
     onCancelClick: () -> Unit,
-    onSwipeMarket: () -> Unit,
-    onUnitsValueChange: (String) -> Unit,
-    onAmountValueChange: (String) -> Unit
+    onSwipeMarket: () -> Unit
 ) {
-    val ticker = remember {
-        MutableLiveData(
-            Ticker(
-                fifteen = BigDecimal.ONE,
-                last = BigDecimal(123),
-                buy = BigDecimal(7450.79),
-                sell = BigDecimal(123),
-                symbol = "GBP"
-            )
-        )
-    }
+    var orderTypeBuy by rememberSaveable { mutableStateOf(true) }
+    val units by rememberSaveable { mutableStateOf(BigDecimal.ZERO) }
+    val amount by rememberSaveable { mutableStateOf(BigDecimal.ZERO) }
+    var btConfirmEnabled by rememberSaveable { mutableStateOf(false) }
+    val ticker = viewModel.ticker.observeAsState().value
     Scaffold(
         bottomBar = {
             Row(
@@ -75,7 +73,29 @@ fun OrderTicker(
                     .background(BackgroundBottom)
             ) {
                 CancelButton(onCancelClick)
-                ConfirmButton(onConfirmClick)
+                ConfirmButton(btConfirmEnabled) {
+                    Log.e(
+                        "OrderTIcker",
+                        "Confirm ${if (orderTypeBuy) "Buy" else "Sell"}" +
+                                " order with $units units and amount $amount"
+                    )
+                    ticker?.let {//TODO implement order
+                        try {
+                            onConfirmClick(
+                                Order(
+                                    orderTypeBuy,
+                                    Calendar.getInstance().timeInMillis,
+                                    it.buy,
+                                    units,
+                                    amount,
+                                    it.symbol
+                                )
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
             }
         },
         modifier = modifier
@@ -87,29 +107,54 @@ fun OrderTicker(
                 .padding(paddingValues)
         ) {
             Text(
-                text = "UK 100 - Cash ${ticker.value?.symbol}",
+                text = "UK 100 - Cash ${ticker?.symbol}",
                 color = Color.White,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(BackgroundProfit)
             )
-            Row(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .background(Color.Black)
-            ) {
-                Sell(ticker.value?.sell.toString(), "L: ${BigDecimal("7432.94")}") {
-                    //TODO implement onSell
+            Box {
+                Row(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .background(Color.Black)
+                ) {
+                    Sell(
+                        ticker?.sell.toString(),
+                        "L: ${ticker?.fifteen.toString()}"
+                    ) {
+                        //TODO implement blink onSell
+                        orderTypeBuy = false
+                    }
+                    Buy(
+                        ticker?.buy.toString(),
+                        "H: ${ticker?.fifteen.toString()}"
+                    ) {
+                        //TODO implement blink onBuy
+                        orderTypeBuy = true
+                    }
                 }
-                Buy(ticker.value?.buy.toString(), "H: 7460.94") {
-                    //TODO implement onBuy
-                }
+                Text(
+                    text = ticker?.spread.toString(),
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .background(BackgroundProfit)
+                        .align(Alignment.BottomCenter)
+                )
             }
             Units(
-                ticker.value?.buy ?: BigDecimal.ZERO,
                 modifier,
-                onUnitsValueChange,
-                onAmountValueChange,
+                ticker,
+                orderTypeBuy,
+                onUnitsValueChange = {
+                    if (it.isNotEmpty()) btConfirmEnabled = true
+//                    units = BigDecimal(it)
+                },
+                onAmountValueChange = {
+                    if (it.isNotEmpty()) btConfirmEnabled = true
+//                    amount = BigDecimal(it)
+                },
                 onSwipeMarket
             )
             Spacer(
@@ -251,53 +296,55 @@ fun Sell(
 
 @Composable
 fun Units(
-    price: BigDecimal = BigDecimal.ZERO,
     modifier: Modifier = Modifier,
+    ticker: Ticker?,
+    isBuy: Boolean,
     onUnitsValueChange: (String) -> Unit,
     onAmountValueChange: (String) -> Unit,
     onSwipeMarket: () -> Unit
 ) {
-    var calculation = rememberSaveable { mutableStateOf("") }
-    val unitsTextValue = remember { mutableStateOf("") }
+    val price = if (isBuy) ticker?.buy ?: BigDecimal.ZERO
+    else ticker?.sell ?: BigDecimal.ZERO
+
+    var unitsValue by rememberSaveable { mutableStateOf("") }
+    var amountValue: String by rememberSaveable { mutableStateOf("") }
     Row(
         modifier = modifier
             .background(BackgroundUnits)
             .padding(6.dp)
     ) {
-        Column(modifier.fillMaxWidth(0.35f)) {
-            Text(
-                text = stringResource(id = R.string.units),
-                color = LightBlue,
-                fontSize = 18.sp,
-                modifier = modifier.align(Alignment.CenterHorizontally)
-            )
-            EditText(
-                onValueChange = {
-                    unitsTextValue.value = it
-                    onUnitsValueChange(it)
-                },
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-            )
+        EditTextTopTitle(
+            modifier = modifier.fillMaxWidth(0.35f),
+            stringResource(id = R.string.units),
+            isBuy,
+            value = unitsValue
+        ) { unitsSelected ->
+            unitsValue = unitsSelected
+            amountValue = try {
+                price.multiply(BigDecimal(unitsSelected)).toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                "0"
+            }
+            onUnitsValueChange(unitsSelected)
         }
-        Column(modifier.fillMaxWidth(0.6f)) {
-            Text(
-                text = stringResource(id = R.string.amount),
-                fontSize = 18.sp,
-                color = LightBlue,
-                modifier = modifier.align(Alignment.CenterHorizontally)
-            )
-            EditText(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
-                newValue = unitsTextValue.value,
-                onValueChange = { onAmountValueChange(it) },
-            )
+        EditTextTopTitle(
+            modifier = modifier.fillMaxWidth(0.6f),
+            title = stringResource(id = R.string.amount),
+            isBuy,
+            value = amountValue
+        ) {
+            amountValue = it
+            unitsValue = try {
+                BigDecimal(it).divide(price).toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                "0"
+            }
+            onAmountValueChange(it)
         }
         Column(modifier.fillMaxWidth()) {
-            SwipeMarket() { onSwipeMarket() }
+            SwipeMarket(isBuy) { onSwipeMarket() }
         }
     }
 }
@@ -306,7 +353,7 @@ fun Units(
 @Composable
 fun OrderTickerPreview() {
     ComposeSampleTheme {
-        OrderTicker(Modifier, {}, {}, {}, {}, {})
+//        OrderTicker(Modifier, {}, {}, {}, {}, {})
     }
 }
 
@@ -331,6 +378,6 @@ fun SellPreview() {
 @Composable
 fun UnitsPreview() {
     ComposeSampleTheme {
-        Units(BigDecimal.ZERO, Modifier, {}, {}, {})
+        Units(Modifier, null, false, {}, {}, {})
     }
 }
